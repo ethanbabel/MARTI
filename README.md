@@ -83,7 +83,7 @@ MARTI supports:
 Example:
 
 ```bash
-MODLE_DIR="Path to models, like Qwen2.5-3B"
+MODEL_DIR="Path to models, like Qwen2.5-3B"
 
 # See the script for more inference examples
 bash scripts/run_test_mas.sh ${MODEL_DIR}
@@ -102,7 +102,7 @@ Example:
 ```bash
 # Minimum hardware requirement for training with 3 Qwen2.5-3B agents: approximately 6×80G GPUs
 
-MODLE_DIR="Path to models, like Qwen2.5-3B"
+MODEL_DIR="Path to models, like Qwen2.5-3B"
 WANDB_KEY="API key of wandb"
 
 # Train Single Agent with GRPO
