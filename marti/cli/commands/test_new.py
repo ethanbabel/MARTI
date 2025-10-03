@@ -96,12 +96,13 @@ class MultiAgentWorld(BaseWorld):
 
         graph = MAGraph(
             agents=self.agents,
-            agent_names=kwargs['agent_names'],
+            agent_ids=kwargs['agent_ids'],
             agent_roles=kwargs['agent_roles'],
             agent_workflow=args.agent_workflow,
             prompt=kwargs['prompt'],
             spatial_adj_mats=kwargs['spatial_adj_mats'],
             temporal_adj_mats=kwargs['temporal_adj_mats'],
+            sampling_params=kwargs['sampling_params'],
             node_kwargs=kwargs['node_kwargs'] if 'node_kwargs' in kwargs else None,
         )
         history = graph.run(all_prompts, num_rounds=args.workflow_args.num_rounds)
@@ -127,10 +128,10 @@ class MultiAgentWorld(BaseWorld):
                                 reward = majority_vote(output['output'], label)
                         rewards.append(reward)
                     temp_history.append({
-                        'agent_name': round_history['agent_name'],
+                        'agent_id': round_history['agent_id'],
                         'agent_role': round_history['agent_role'],
                         'pretrain': round_history['pretrain'],
-                        'round_id': round_history['round_id'],
+                        'turn_id': round_history['turn_id'],
                         'inputs': inputs[problem_id],
                         'outputs': outputs[problem_id],
                         'rewards': rewards[problem_id],
@@ -239,6 +240,9 @@ def train(cfg: DictConfig):
                     agent_config.enable_prefix_caching,
                     agent_config.enforce_eager,
                     max_len,
+                    None,  # shared_pg
+                    agent_config.vllm_gpu_memory_utilization,
+                    getattr(agent_config, "vllm_enable_sleep", False),
                 )
                 llm_dict[agent_config.pretrain] = agent_llms
                 seed += agent_config.vllm_num_engines
