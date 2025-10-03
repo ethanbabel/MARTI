@@ -8,6 +8,7 @@ tqdm
 flash_attn==2.7.0.post2
 vllm==0.8.5.post1
 latex2sympy2
+ninja
 numpy
 pandas
 peft
