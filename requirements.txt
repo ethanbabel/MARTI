@@ -7,6 +7,7 @@ tabulate
 tqdm
 flash_attn==2.7.0.post2
 vllm==0.8.5.post1
+json5
 latex2sympy2
 ninja
 numpy
@@ -14,6 +15,7 @@ pandas
 peft
 pylatexenc
 ray==2.43.0
+ray[default]
 regex
 Requests
 ring_flash_attn
