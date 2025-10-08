@@ -218,7 +218,7 @@ We evaluate a mixture-of-agents approach using the `Qwen2.5-3B` model, trained o
 - [ ] Initial support for agentic tasks (e.g., GAIA benchmark)
 - [ ] More features are working in progress
 
-## 👏 Acknowledge
+## 👏 Acknowledgements
 
 MARTI is developed primarily based on [OpenRLHF](https://github.com/OpenRLHF/OpenRLHF). We would like to express our gratitude to the developers of [OpenRLHF](https://github.com/OpenRLHF/OpenRLHF), as well as to the teams behind [vLLM](https://github.com/vllm-project/vllm), [Ray](https://github.com/ray-project/ray) and [DeepSpeed](https://github.com/deepspeedai/DeepSpeed) for their invaluable contributions.
 
