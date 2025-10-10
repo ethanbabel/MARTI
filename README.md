@@ -11,6 +11,7 @@ MARTI is an open-source framework for training LLM-based Multi-Agent Systems (MA
 **MARTI is still in a very early experimental stage, we are actively developing more powerful LLM-based multi-agent RL approaches and warmly welcome collaborations in this direction.**
 
 ## 🔥 News
+- [2025-08-05] We have introduced new support for Async Tool Use in Agentic RL, and Async Workflow for Multi-Agent RL. This enables more flexible and efficient RL pipelines, supporting both single-agent and multi-agent scenarios. Look at [🔥 Customised Async Step and Workflow](#-customised-async-step-and-workflow).
 - [2025-05-27] We release the codebase of MARTI framework, welcome to have a try on LLM-based multi-agent reinforcement learning. 🤗
 
 ## 🔖 Content
@@ -22,6 +23,7 @@ MARTI is an open-source framework for training LLM-based Multi-Agent Systems (MA
   - [⚙️ Usage](#️-usage)
     - [🔁 Multi-Agent Inference](#-multi-agent-inference)
     - [🏋️ Multi-Agent Training](#️-multi-agent-training)
+    - [🔥 Customised Async Step and Workflow](#-customised-async-step-and-workflow)
     - [📊 Preliminary Experiments](#-preliminary-experiments)
       - [Training Details](#training-details)
       - [Benchmark Results](#benchmark-results)
@@ -34,6 +36,7 @@ MARTI is an open-source framework for training LLM-based Multi-Agent Systems (MA
   - [🤝 Core Contributors](#-core-contributors)
   - [📬 Contact](#-contact)
   - [🔬 Citation](#-citation)
+  - [⭐️ Star History](#️-star-history)
 
 
 ## 🔍 Overview
@@ -80,7 +83,7 @@ MARTI supports:
 Example:
 
 ```bash
-MODLE_DIR="Path to models, like Qwen2.5-3B"
+MODEL_DIR="Path to models, like Qwen2.5-3B"
 
 # See the script for more inference examples
 bash scripts/run_test_mas.sh ${MODEL_DIR}
@@ -99,7 +102,7 @@ Example:
 ```bash
 # Minimum hardware requirement for training with 3 Qwen2.5-3B agents: approximately 6×80G GPUs
 
-MODLE_DIR="Path to models, like Qwen2.5-3B"
+MODEL_DIR="Path to models, like Qwen2.5-3B"
 WANDB_KEY="API key of wandb"
 
 # Train Single Agent with GRPO
@@ -108,6 +111,40 @@ bash scripts/run_train_grpo.sh ${MODEL_DIR} ${WANDB_KEY}
 # Train Multi-Agent Debate with Reinforce++
 bash scripts/run_train_mad.sh ${MODEL_DIR} ${WANDB_KEY}
 ```
+
+### 🔥 Customised Async Step and Workflow
+
+We introduce asynchronous tool use and workflow support for both single-agent and multi-agent RL pipelines. These features make our framework more modular, efficient, and scalable for a variety of RL scenarios.
+
+**Single Agent Tool Use**
+- Modular Steps (`marti/worlds/steps`): Each agent's actions are now organized in step files (e.g., `xxx_step.py`), making it easy to customize and extend for new tasks.
+- Expanded Toolset (`marti/worlds/tools`): Our agents now have access to a broader range of tools for agentic decision-making, enabling richer interactions and problem-solving capabilities.
+
+```bash
+# Multi-turn Code RL
+bash scripts/run_train_grpo_code.sh
+
+# Multi-turn Search RL
+bash scripts/run_train_grpo_search.sh
+```
+
+> Note: You can refer to [PeterGriffinJin/Search-R1](https://github.com/PeterGriffinJin/Search-R1) and [bytedance/SandboxFusion](https://github.com/bytedance/SandboxFusion) separately to set up search and code tool services.
+
+**Multi-Agent Workflow**
+- Workflow Orchestration (`marti/worlds/workflows`): We now support orchestrating complex multi-agent environments via modular workflow files (e.g., `xxx_workflow.py`). This allows coordinated interactions between multiple agents in a flexible and easily configurable manner.
+- Advanced Processors (`marti/worlds/workflows`): Integrated processors (e.g., `xxx_processor.py`) support advanced reward shaping and custom feedback loops, empowering more sophisticated learning dynamics and agent cooperation/competition.
+
+```bash
+# Chain-of-agents (MathChat)
+bash scripts/run_train_mathchat_async.sh
+
+# Multi-agent Debate
+bash scripts/run_train_mad_async.sh
+```
+
+These improvements open up new possibilities for research and deployment in both single-agent and multi-agent RL settings. As always, we're keen for your feedback and contributions!
+
+
 
 ### 📊 Preliminary Experiments
 
@@ -181,7 +218,7 @@ We evaluate a mixture-of-agents approach using the `Qwen2.5-3B` model, trained o
 - [ ] Initial support for agentic tasks (e.g., GAIA benchmark)
 - [ ] More features are working in progress
 
-## 👏 Acknowledge
+## 👏 Acknowledgements
 
 MARTI is developed primarily based on [OpenRLHF](https://github.com/OpenRLHF/OpenRLHF). We would like to express our gratitude to the developers of [OpenRLHF](https://github.com/OpenRLHF/OpenRLHF), as well as to the teams behind [vLLM](https://github.com/vllm-project/vllm), [Ray](https://github.com/ray-project/ray) and [DeepSpeed](https://github.com/deepspeedai/DeepSpeed) for their invaluable contributions.
 
