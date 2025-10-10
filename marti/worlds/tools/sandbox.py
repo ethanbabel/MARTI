@@ -27,7 +27,7 @@ import ray.actor
 import ray.util.multiprocessing
 
 from marti.worlds.tools.base import BaseToolExecutor
-from marti.worlds.third_party.sandbox_fusion import _process_single_case
+from marti.worlds.third_party.sandbox_fusion import _process_single_case, call_sandbox_api
 from marti.helpers.logging import init_logger
 
 logger = init_logger(__name__)
@@ -81,17 +81,27 @@ class SandboxFusionExecutor(BaseToolExecutor):
         import asyncio
 
         try:
-            result_text, metadata = await asyncio.get_event_loop().run_in_executor(
-                None,
-                _process_single_case,
-                0,
-                None,
-                None,
-                self.sandbox_fusion_url,
-                code,
-                timeout,
-                language
-            )
+            # result_text, metadata = await asyncio.get_event_loop().run_in_executor(
+            #     None,
+            #     _process_single_case,
+            #     0,
+            #     None,
+            #     None,
+            #     self.sandbox_fusion_url,
+            #     code,
+            #     timeout,
+            #     language
+            # )
+
+            response, last_error = call_sandbox_api(self.sandbox_fusion_url, code, None, timeout, timeout, language)
+
+            if last_error is not None:
+                return last_error, {"run_status": "Error", "exception": last_error}
+
+            metadata = {
+                "run_status": response["run_result"]["status"],
+                "stdout": response["run_result"]["stdout"].strip()
+            }
 
             # we should always expect this since we don't have correct answer
             if metadata["run_status"] == "Finished":

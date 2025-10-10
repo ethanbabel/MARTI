@@ -1,14 +1,14 @@
 {
     "type": "function",
     "function": {
-        "name": "code_interpreter",
-        "description": "A tool for execute code",
+        "name": "python",
+        "description": "A tool for execute python code",
         "parameters": {
             "type": "object",
             "properties": {
                 "code": {
                     "type": "string",
-                    "description": "code needs to be execute and grad"
+                    "description": "python code needs to be execute and grad, you should use `print()` to get the standard outputs in the code"
                 }
             },
             "required": [

@@ -5,17 +5,14 @@ datasets
 tokenizers
 tabulate
 tqdm
-flash_attn==2.7.0.post2
+# flash_attn==2.7.0.post2
 vllm==0.8.5.post1
-json5
 latex2sympy2
-ninja
 numpy
 pandas
 peft
 pylatexenc
 ray==2.43.0
-ray[default]
 regex
 Requests
 ring_flash_attn
@@ -33,3 +30,6 @@ class-registry
 hydra-core==1.3.2
 antlr4-python3-runtime==4.9.3
 shortuuid
+joblib
+treequest[abmcts-m]
+ray[default]

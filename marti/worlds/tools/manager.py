@@ -105,6 +105,9 @@ class ToolManager:
                 get_if_exists=True
             ).remote()
     
+    def set_tools(self, tools):
+        self.tools = tools
+
     def get_max_turns(self):
         return self.config.get("max_turns", 3)
     

@@ -26,7 +26,7 @@ from marti.worlds.workflows.workflow_wrapper import MultiAgentWrapper
 from marti.worlds.workflows.default_processor import processor
 from marti.worlds.tools.manager import ToolManager
 from marti.worlds.tools.mcp_manager import MCPManager
-from marti.worlds.tool_world import register_mcp_tools, register_openai_tools, print_tools
+from marti.worlds.tool_world import register_mcp_tools, register_openai_tools, print_tools, assign_action_mask
 
 class MultiAgentWorldAsync(BaseWorld):
     def __init__(self, strategy, agents, *args, **kwargs):
@@ -63,6 +63,7 @@ class MultiAgentWorldAsync(BaseWorld):
             self.tool_manager = ToolManager(self.tools_config)
             self.tools = register_openai_tools(self.tools_config, self.tool_manager)
 
+        self.tool_manager.set_tools(self.tools)
         print_tools(self.tools)
 
     def _init_processor(self):
@@ -156,13 +157,14 @@ class MultiAgentWorldAsync(BaseWorld):
                 workflow_args=self.workflow_args,
                 workflow_func_path=self.args.workflow_func_path
             )
-            # 2. The core change: Use the async wrapper to run workflows
             ref = multi_agent_wrapper.add_requests.remote(
-                tool_manager=self.tool_manager,  # Pass your tool manager if you have one
+                tool_manager=self.tool_manager,
                 prompts=per_llm_prompts,
                 labels=per_llm_labels,
                 task=task,
-                metadata=per_llm_metadata
+                metadata=per_llm_metadata,
+                max_length=self.total_max_len,
+                is_eval=is_eval
             )
             refs.append(ref)
             all_wrappers.append(multi_agent_wrapper)
@@ -183,9 +185,6 @@ class MultiAgentWorldAsync(BaseWorld):
             assert len(all_trajectories) == len(
                 prompts), f"{len(all_trajectories)} vs {len(prompts)}"
             return all_trajectories
-
-    def process_labels(self, labels):
-        pass
 
     @torch.no_grad()
     def evaluate_samples(self, eval_data):
@@ -216,7 +215,7 @@ class MultiAgentWorldAsync(BaseWorld):
         accuracy = np.mean([np.mean(acc) for acc in all_accuracies])
 
         return {"accuracy": accuracy, "metadata": all_results}
-    
+
     @torch.no_grad()
     def generate_samples(self, all_prompts, rank=0, world_size=8):
         args = self.strategy.args
@@ -250,24 +249,44 @@ class MultiAgentWorldAsync(BaseWorld):
                     for key, values in agent_samples.items():
                         print(agent_index, key, str(values[index]))
 
+        def flatten_list(full_list):
+            return [ v for sublist in full_list for v in sublist]
+
         samples_list = [[] for _ in range(self.num_agents)]
         for agent_idx, samples in enumerate(training_samples):
             agent_tokenizer = self.agents[agent_idx]["tokenizer"]
             
-            prompt_ids = [self.tokenize_fn_with_tok(prompt, agent_tokenizer, max_len=self.args.prompt_max_len) for prompt in samples["prompts"]]
-            output_ids = [self.tokenize_fn_with_tok(output, agent_tokenizer, max_len=self.args.generate_max_len) for output in samples["outputs"]]
+            # prompt_ids = [self.tokenize_fn_with_tok(prompt, agent_tokenizer, max_len=self.args.prompt_max_len) for prompt in samples["prompts"]]
+            # output_ids = [self.tokenize_fn_with_tok(output, agent_tokenizer, max_len=self.args.generate_max_len) for output in samples["outputs"]]
+            
+            prompt_ids, output_ids, action_mask = [], [], []
+            for prompt, output in zip(samples["prompts"], samples["outputs"]):
+                cur_prompt_ids = self.tokenize_fn_with_tok(prompt, agent_tokenizer, max_len=self.args.prompt_max_len)
+                prompt_ids.append(cur_prompt_ids)
+                cur_output_ids = self.tokenize_fn(agent_tokenizer, output, self.total_max_len, padding=False)["input_ids"]
+                if isinstance(output, list):
+                    actions = [assign_action_mask(turn) for turn in output]
+                    cur_action_mask = [[action]*len(turn) for action, turn in zip(actions, cur_output_ids)]
+                    output_ids.append(flatten_list(cur_output_ids))
+                    action_mask.append(flatten_list(cur_action_mask))
+                else:
+                    output_ids.append(cur_output_ids)
+                    action_mask.append([1]*len(cur_output_ids))
+            
             all_labels = samples["labels"]
 
             for i in range(0, len(prompt_ids), args.micro_rollout_batch_size):
                 prompts = prompt_ids[i: i + args.micro_rollout_batch_size]
                 outputs = output_ids[i: i + args.micro_rollout_batch_size]
                 labels = all_labels[i: i + args.micro_rollout_batch_size]
-
+                actions = action_mask[i: i + args.micro_rollout_batch_size]
+                
                 samples_list[agent_idx].append(self.prepare_samples(
                     prompts=prompts,
                     outputs=outputs,
                     pred_labels=labels,
-                    tokenizer=agent_tokenizer
+                    action_mask_list=actions,
+                    tokenizer=agent_tokenizer,
                 ))
 
         return {"sample": samples_list}
@@ -292,6 +311,7 @@ class MultiAgentWorldAsync(BaseWorld):
         attention_mask = []
         num_actions = []
         action_mask = []
+        action_mask = []
         for i, output in enumerate(outputs):
             prompt = prompts[i]
             input_len = len(prompt)
@@ -304,7 +324,8 @@ class MultiAgentWorldAsync(BaseWorld):
             # num_actions.append(max(1, sum(current_action_mask)))
             assert output_len > 1, f"output_len = {output_len}"
             num_actions.append(max(1, output_len))
-            action_mask.extend([1] * max(1, output_len))
+            # action_mask.extend([1] * max(1, output_len))
+            action_mask.extend(action_mask_list[i])
 
         sequences = torch.tensor(sequences, device="cpu").unsqueeze(0)
         attention_mask = torch.tensor(

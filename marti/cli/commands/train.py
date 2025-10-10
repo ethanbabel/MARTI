@@ -89,10 +89,11 @@ def train(cfg: DictConfig):
     agent_workflow = cfg.get("agent_workflow", "base")
     if agent_workflow in ["base", "tool"]:
         controller_class = BaseController
-    elif agent_workflow in ["multi-agents-debate", "chain-of-agents", "mixture-of-agents"]:
-        controller_class = MultiAgentController
+    # elif agent_workflow in ["multi-agents-debate", "chain-of-agents", "mixture-of-agents", "judge_workflow"]:
     else:
-        raise NotImplementedError
+        controller_class = MultiAgentController
+    # else:
+    #     raise NotImplementedError
 
     # print(OmegaConf.to_yaml(cfg))
     controller = controller_class(strategy=strategy)
