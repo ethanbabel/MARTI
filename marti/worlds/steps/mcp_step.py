@@ -40,8 +40,12 @@ async def step_with_tools(
             elif tool_manager and tool_name in tool_manager.available_tools:
                 # Execute registered tool
                 try:
+                    # logger.error(f"{parser_result}")
                     # Parse tool arguments
                     args_dict = json.loads(parser_result.get("args", "{}"))
+
+                    if isinstance(args_dict, str):
+                        args_dict = json.loads(args_dict)
 
                     # Track tool usage
                     if tool_name not in extra_logs["tools_used"]:
@@ -53,10 +57,9 @@ async def step_with_tools(
                         tool_name, args_dict, **kwargs
                     )
                     tool_response = response
-
                 except Exception as e:
                     tool_response = f"Error executing {tool_name}: {str(e)}"
-                    logger.error(f"Tool execution error: {e}")
+                    logger.error(f"Tool execution error: {e} - {type(parser_result.get('args'))} - {parser_result.get('args')}")
             else:
                 # Unknown tool
                 tool_response = f"Tool '{tool_name}' is not supported"

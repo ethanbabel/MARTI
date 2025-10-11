@@ -13,6 +13,9 @@ def qwen_reward_fn_format(generated_text, golden_answer, task="math"):
     return accuracy
 
 def qwen_reward_fn(generated_text, golden_answer, task="math"):
+    if isinstance(golden_answer, list):
+        golden_answer = golden_answer[0]
+
     model_answer = extract_answer(generated_text, task)
     accuracy = 1.0 if grade_answer(model_answer, golden_answer) else 0.0 #-0.5 #0.0
     # if "boxed" not in generated_text:

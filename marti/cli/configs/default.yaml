@@ -133,6 +133,9 @@ default_agent:
   l2: 0.0
   ptx_coef: 0.05
   eps_clip: 0.2
+  clip_eps_high: 0.2
+  policy_loss_type: "ppo"
+  token_level_loss: true
   value_clip: 0.2
   lambd: 0.95
   gamma: 1
@@ -170,6 +173,7 @@ extra_eval_dir: null
 verify_task: "math"
 verify_task_eval: "math"
 filter_samples_by_reward: false
+filter_agents_data: false
 
 prompt_data: null
 prompt_data_probs: "1.0"

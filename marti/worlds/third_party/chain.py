@@ -457,7 +457,7 @@ class MultiAgentChain(BaseMultiAgentGame):
             solution = solution.split("</think>")[-1].strip().strip("</answer>").strip("<answer>")
         return solution
 
-    def run(self, problems: List[str]):
+    def run(self, problems: List[str], *args, **kwargs):
         num_problems = len(problems)
         self.histories = [
             [] for _ in range(num_problems)

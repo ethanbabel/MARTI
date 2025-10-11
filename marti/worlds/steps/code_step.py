@@ -3,7 +3,8 @@ from typing import Dict, Any, List, Optional
 
 from marti.worlds.tools.manager import ToolManager
 from marti.helpers.logging import init_logger
-from marti.verifiers.deepcoder.code_reward import rllm_reward_fn_code
+# from marti.verifiers.deepcoder.code_reward import rllm_reward_fn_code
+from marti.verifiers.areal.code_reward import code_verify
 
 import os
 import logging
@@ -21,9 +22,10 @@ async def step(
     Generic step function that works with any tools.
     Tool parser should return: [{"name": "tool_name", "args": "{...}"}, ...]
     """
-    metadata = json.loads(kwargs["metadata"])
-    final_reward = rllm_reward_fn_code(
-        metadata["data_source"], action, kwargs["label"])
+    # metadata = json.loads(kwargs["metadata"])
+    # final_reward = rllm_reward_fn_code(
+    #     metadata["data_source"], action, kwargs["label"])
+    final_reward = code_verify(kwargs["label"], action)
 
     return {
         "next_observation": observation + [action],

@@ -3,6 +3,7 @@ import asyncio
 import os
 import time
 import ray
+import json
 
 from marti.helpers.logging import init_logger
 from marti.models.vllm.engine import BaseLLMRayActor
@@ -40,8 +41,8 @@ class LLMRayActorAsync(BaseLLMRayActor):
         super().__init__(*args, bundle_indices=bundle_indices, **kwargs)
         self.agent_func_path = kwargs.pop("agent_func_path")
 
-        # Initialize super class
-        super().__init__(*args, bundle_indices=bundle_indices, **kwargs)
+        # # Initialize super class
+        # super().__init__(*args, bundle_indices=bundle_indices, **kwargs)
 
         # Initialize result queue for streaming completed results
         self.result_queue = asyncio.Queue()
@@ -76,6 +77,55 @@ class LLMRayActorAsync(BaseLLMRayActor):
     async def wake_up(self):
         await self.llm.wake_up()
 
+    async def get_trajectory(self, tool_manager, hf_tokenizer, max_length, prompt, label, sampling_params, meta=None):
+        # Create agent instance for this trajectory (back to original approach)
+        agent_instance = AgentInstance.remote(self.agent_func_path)
+
+        # Initialize observations and actions for the current prompt
+        observation = [prompt]
+        # action_ranges = []
+        tools_used = {}
+        trajectory_start = time.time()
+        
+        try:
+            # Execute multiple steps of interaction
+            for step_idx in range(tool_manager.get_max_turns()):
+                # Next sampling budget
+                observation_text = "".join(observation)
+                observation_tokens_len = len(
+                    hf_tokenizer(observation_text, add_special_tokens=False, return_tensors="pt")["input_ids"][0]
+                )
+                if observation_tokens_len >= max_length:
+                    logger.warning(f"Trajectory exceeded max length at turn {step_idx}")
+                    break
+                
+                # Generate response asynchronously
+                request_output = await self.generate_async(observation_text, sampling_params)
+                action = request_output.outputs[0].text
+
+                # Call step function to get reward and next observation
+                # Use asyncio.to_thread to make Ray remote call non-blocking
+                # kwargs = {"sampling_params": sampling_params}
+                result = await agent_instance.step.remote(observation, action, tool_manager, metadata=meta, label=label)
+
+                # Collect tool usage
+                step_tools = result.get("extra_logs", {}).get("tools_used", {})
+                for tool, count in step_tools.items():
+                    tools_used[tool] = tools_used.get(tool, 0) + count
+
+                observation = result["next_observation"]
+                done = result["done"]
+
+                if done:
+                    break
+        finally:
+            # Kill agent instance when done
+            ray.kill(agent_instance)
+
+        trajectory_time = time.time() - trajectory_start
+        return {"result": result, "observation": observation, "trajectory_time": trajectory_time, "tools_used": tools_used}
+
+
     async def add_requests(self, tool_manager, sampling_params, prompts, labels, max_length, task, hf_tokenizer=None, metadata=None):
         """
         Process requests from rank0 and generate responses with multiple agent interactions.
@@ -94,63 +144,21 @@ class LLMRayActorAsync(BaseLLMRayActor):
 
         async def execute_agent(prompt, label, sampling_params, meta=None):
             async with semaphore:
-                # Create a unique agent instance for this prompt
-                agent_instance = AgentInstance.remote(
-                    self.agent_func_path
-                )
-
-                # Initialize observations and actions for the current prompt
-                observation = [prompt]
-                # action_ranges = []
-                tools_used = {}
-                trajectory_start = time.time()
-                
-                try:
-                    # Execute multiple steps of interaction
-                    for step_idx in range(tool_manager.get_max_turns()):
-                        # Next sampling budget
-                        observation_text = "".join(observation)
-                        observation_tokens_len = len(
-                            hf_tokenizer(observation_text, add_special_tokens=False, return_tensors="pt")["input_ids"][0]
-                        )
-                        if observation_tokens_len >= max_length:
-                            logger.warning(f"Trajectory exceeded max length at turn {step_idx}")
-                            break
-                        
-                        # Generate response asynchronously
-                        request_output = await self.generate_async(observation_text, sampling_params)
-                        action = request_output.outputs[0].text
-
-                        # Call step function to get reward and next observation
-                        # Use asyncio.to_thread to make Ray remote call non-blocking
-                        # kwargs = {"sampling_params": sampling_params}
-                        result = await agent_instance.step.remote(observation, action, tool_manager, metadata=meta, label=label)
-
-                        # Collect tool usage
-                        step_tools = result.get("extra_logs", {}).get("tools_used", {})
-                        for tool, count in step_tools.items():
-                            tools_used[tool] = tools_used.get(tool, 0) + count
-                        
-                        observation = result["next_observation"]
-                        done = result["done"]
-
-                        if done:
-                            break
-                finally:
-                    ray.kill(agent_instance)
+                traj_dict = await self.get_trajectory(tool_manager, hf_tokenizer, max_length, prompt, label, sampling_params, meta=meta)
+                result, observation, trajectory_time, tools_used = traj_dict["result"], traj_dict["observation"], traj_dict["trajectory_time"], traj_dict["tools_used"]
 
                 if "final_reward" in result:
                     final_reward = result["final_reward"]
                 else:
-                    final_reward = auto_verify(task, 1, ["".join(observation[1:])], [label])[0]
-                
+                    final_reward = auto_verify(meta.get("source", task), 1, ["".join(observation[1:])], [label])[0]
+
                 # Store the final response when agent execution is complete
                 final_response = {
                     "prompt": prompt,
                     "label": label,
                     "observation": observation[1:], # remove the prompt
                     "reward": final_reward,
-                    "trajectory_time": time.time() - trajectory_start,
+                    "trajectory_time": trajectory_time,
                     "tools_used": tools_used,
                     "turns": len(observation) - 1
                 }
@@ -161,6 +169,9 @@ class LLMRayActorAsync(BaseLLMRayActor):
 
         if metadata is None:
             metadata = [{} for _ in range(len(prompts))]
+        else:
+            metadata = [json.loads(meta) for meta in metadata]
+
         tasks = []
         for prompt, label, meta in zip(prompts, labels, metadata):
             tasks.append(execute_agent(prompt, label, copy.deepcopy(sampling_params), meta))

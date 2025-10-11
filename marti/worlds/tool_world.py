@@ -21,6 +21,13 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(os.getenv("MARTI_LOGGING_LEVEL", "WARN"))
 
+def assign_action_mask(turn):
+    if "\n<|im_start|>user\n<tool_response>" in turn and "</tool_response><|im_end|>\n<|im_start|>assistant" in turn:
+        return 0
+    else:
+        return 1
+
+
 def register_mcp_tools(tool_manager):
     import asyncio
     asyncio.run(tool_manager.initialize())
@@ -206,6 +213,8 @@ class ToolWorld(BaseWorld):
         # TODO: avioding generate outputs with all llms, which is time-cost
         if self.args.eval_workers > 0:
             llms = self.shared_llms[:self.args.eval_workers]
+        else:
+            llms = self.shared_llms
 
         all_results = self.distribute_prompts(args.verify_task_eval, all_prompts, all_labels, all_metadata, llms, sampling_params, is_repeat=True)
 
@@ -252,12 +261,6 @@ class ToolWorld(BaseWorld):
 
         # Distribute requests to engines and collect responses to outputs
         all_results = self.distribute_prompts(args.verify_task, all_prompts, all_labels, all_metadata, llms, sampling_params, is_repeat=False)
-
-        def assign_action_mask(turn):
-            if "\n<|im_start|>user\n<tool_response>" in turn and "</tool_response><|im_end|>\n<|im_start|>assistant" in turn:
-                return 0
-            else:
-                return 1
 
         all_prompts, all_outputs, all_rewards = [], [], []
         for result in all_results:

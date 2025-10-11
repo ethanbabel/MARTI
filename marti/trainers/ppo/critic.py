@@ -142,6 +142,7 @@ class CriticModelRayActor(BasePPORole):
             prompt_max_len=args.prompt_max_len,
             value_clip=args.value_clip,
             eps_clip=args.eps_clip,
+            clip_eps_high=args.clip_eps_high,
             rolename=self.rolename
         )
 
