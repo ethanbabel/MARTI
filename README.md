@@ -11,6 +11,7 @@ MARTI is an open-source framework for training LLM-based Multi-Agent Systems (MA
 **MARTI is still in a very early experimental stage, we are actively developing more powerful LLM-based multi-agent RL approaches and warmly welcome collaborations in this direction.**
 
 ## 🔥 News
+- [2025-10-10] We’re thrilled to see both [ReviewRL (EMNLP 2025)](https://arxiv.org/abs/2508.10308) and [CoMAS](https://arxiv.org/abs/2510.08529) being built on MARTI!
 - [2025-08-05] We have introduced new support for Async Tool Use in Agentic RL, and Async Workflow for Multi-Agent RL. This enables more flexible and efficient RL pipelines, supporting both single-agent and multi-agent scenarios. Look at [🔥 Customised Async Step and Workflow](#-customised-async-step-and-workflow).
 - [2025-05-27] We release the codebase of MARTI framework, welcome to have a try on LLM-based multi-agent reinforcement learning. 🤗
 
@@ -212,11 +213,12 @@ We evaluate a mixture-of-agents approach using the `Qwen2.5-3B` model, trained o
 - [Workflows Integration](./docs/2-Workflows-Integration.md)
 - [Reward and Training](./docs/3-Reward-And-Training.md)
 
-## 🚩 Roadmap
+## 🚩 Awesome work using verl
 
-- [ ] Release MARTI Technical Report
-- [ ] Initial support for agentic tasks (e.g., GAIA benchmark)
-- [ ] More features are working in progress
+- [![arXiv](https://img.shields.io/badge/arXiv-2508.10308-b31b1b?style=flat-square&logo=arxiv)](https://arxiv.org/abs/2508.10308) ReviewRL: Towards Automated Scientific Review with RL
+
+- [![arXiv](https://img.shields.io/badge/arXiv-2510.08529-b31b1b?style=flat-square&logo=arxiv)](https://arxiv.org/abs/2510.08529) CoMAS: Co-Evolving Multi-Agent Systems via Interaction Rewards
+
 
 ## 👏 Acknowledgements
 
@@ -252,3 +254,4 @@ If you use MARTI in your research, please cite the project:
 ## ⭐️ Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=TsinghuaC3I/MARTI&type=Date)](https://www.star-history.com/#TsinghuaC3I/MARTI&Date)
+
