@@ -8,6 +8,7 @@ import random
 from typing import Dict, List, Any, Optional
 import json
 import asyncio
+import ray
 from marti.helpers.logging import init_logger
 from marti.verifiers.auto_verify import auto_verify
 from marti.verifiers.qwen.qwen_eval import majority_vote

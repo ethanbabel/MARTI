@@ -11,7 +11,7 @@ class BaseMultiAgentGame:
         self.template_id = template_id
         self.num_agents = len(agent_list)
     
-    def run(self, problems: List[str]):
+    def run(self, problems: List[str], *args, **kwargs):
         pass
     
     def get_history(self):

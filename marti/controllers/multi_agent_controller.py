@@ -36,9 +36,9 @@ class MultiAgentController(BaseController):
             for agent_id, agent_config in agent_dict.items():
                 self.agent_configs.append([agent_id, agent_config])
 
-        if self.args.agent_workflow in ["multi-agents-debate", "mixture-of-agents"]:
+        if self.args.agent_workflow in ["multi-agents-debate", "mixture-of-agents", "judge_workflow"]:
             self.args.credit_model = None
-            print("Credit model is not supported for Multi-Agents-Debate and Mixture-of-Agents. Set Credit model to None.")
+            print("Credit model is not supported for Multi-Agents-Debate, Mixture-of-Agents, and Judge-Workflow. Set Credit model to None.")
 
         if self.args.credit_model == "prime":
             self.credit_model = self._init_prime()
@@ -217,6 +217,7 @@ class MultiAgentController(BaseController):
             "max_new_tokens": agent_config.generate_max_len,
             "max_length": max_len,
             "temperature": agent_config.temperature,
+            "eval_temperature": agent_config.eval_temperature if agent_config.eval_temperature is not None else agent_config.temperature,
             "top_p": agent_config.top_p,
             "pad_token_id": tokenizer.pad_token_id,
             "eos_token_id": tokenizer.eos_token_id,
@@ -449,6 +450,24 @@ class MultiAgentController(BaseController):
             credit_status["credit/token_score"] = self.compute_average_rewards(
                 all_results_with_rewards)
 
+        if self.args.filter_agents_data:
+            min_num_samples = [
+                min([len(rank_data[agent_id]) for rank_data in all_results])
+                for agent_id in range(self.num_agents)
+            ]
+            num_full_batches =[
+                (min_num_samples[agent_id] * self.args.micro_rollout_batch_size) // self.args.train_batch_size
+                for agent_id in range(self.num_agents)
+            ]
+            num_elements_to_keep = [
+                (num_full_batches[agent_id] * self.args.train_batch_size) // self.args.micro_rollout_batch_size
+                for agent_id in range(self.num_agents)
+            ]
+        else:
+            num_elements_to_keep = [
+                -1 for _ in range(self.num_agents)
+            ]
+
         sharded_data_refs = [[None for _ in range(
             world_size)] for _ in range(self.num_agents)]
 
@@ -458,6 +477,10 @@ class MultiAgentController(BaseController):
             # process_rewards
             if self.credit_model is None or steps <= self.args.warmup_steps_for_credit:
                 shared_data = all_results[rank]
+                if self.args.filter_agents_data:
+                    for agent_id in range(self.num_agents):
+                        # filter data to keep num_elements_to_keep
+                        shared_data[agent_id] = shared_data[agent_id][:num_elements_to_keep[agent_id]]
             else:
                 shared_data = all_results_with_rewards[rank]
                 self.apply_agent_level_reward_shaping(shared_data)

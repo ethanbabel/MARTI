@@ -77,6 +77,9 @@ class PPOTrainer(ABC):
         buffer_limit: int = 0,
         buffer_cpu_offload: bool = True,
         eps_clip: float = 0.2,
+        clip_eps_high: float = 0.2,
+        policy_loss_type="ppo", 
+        token_level_loss=False,
         value_clip: float = 0.2,
         micro_rollout_batch_size: int = 8,
         gradient_checkpointing: bool = False,
@@ -120,7 +123,7 @@ class PPOTrainer(ABC):
         self.rolename = rolename
         self.eos_token_id = eos_token_id
         
-        self.actor_loss_fn = PolicyLoss(eps_clip)
+        self.actor_loss_fn = PolicyLoss(eps_clip, clip_eps_high, policy_loss_type, token_level_loss)
         self.critic_loss_fn = ValueLoss(value_clip)
         self.ptx_loss_fn = GPTLMLoss()
 

@@ -197,7 +197,7 @@ class MultiAgentDebate(BaseMultiAgentGame):
                     "turn_id": round_num
                 })
 
-    def run(self, problems: List[str]):
+    def run(self, problems: List[str], *args, **kwargs):
         num_problems = len(problems)
         """
         [

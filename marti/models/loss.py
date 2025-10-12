@@ -30,9 +30,15 @@ class PolicyLoss(nn.Module):
     Policy Loss for PPO
     """
 
-    def __init__(self, clip_eps: float = 0.2) -> None:
+    def __init__(self, clip_eps: float = 0.2, clip_eps_high=0.2, policy_loss_type="ppo", token_level_loss=True) -> None:
         super().__init__()
         self.clip_eps = clip_eps
+        self.clip_eps_high = clip_eps_high
+        self.policy_loss_type = policy_loss_type
+        self.token_level_loss = token_level_loss
+
+        if self.policy_loss_type == "gspo":
+            self.token_level_loss = False
 
     def forward(
         self,
@@ -41,11 +47,25 @@ class PolicyLoss(nn.Module):
         advantages: torch.Tensor,
         action_mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
-        ratio = (log_probs - old_log_probs).exp()
+        if self.policy_loss_type == "ppo":
+            log_ratio = log_probs - old_log_probs
+            ratio = log_ratio.exp()
+        elif self.policy_loss_type == "gspo":
+            log_ratio = log_probs - old_log_probs
+            ratio = (log_ratio * action_mask).sum(dim=-1) / action_mask.sum(dim=-1)
+            ratio = ratio.exp().unsqueeze(-1) * action_mask
+        else:
+            raise ValueError(f"Invalid policy loss type: {self.policy_loss_type}")
+
         surr1 = ratio * advantages
-        surr2 = ratio.clamp(1 - self.clip_eps, 1 + self.clip_eps) * advantages
+        surr2 = ratio.clamp(1 - self.clip_eps, 1 + self.clip_eps_high) * advantages
+
         loss = -torch.min(surr1, surr2)
-        loss = masked_mean(loss, action_mask, dim=-1).mean()
+    
+        if self.token_level_loss:
+            loss = masked_mean(loss, action_mask, dim=None)
+        else:
+            loss = masked_mean(loss, action_mask, dim=-1).mean()
         return loss
 
 

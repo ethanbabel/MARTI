@@ -3,8 +3,10 @@ from marti.verifiers.qwen.qwen_eval import simplerl_reward_fn, qwen_reward_fn, q
 from marti.verifiers.deepscaler.math_reward import deepscaler_reward_fn #, test_time_train
 from marti.verifiers.deepscaler.math_reward import test_time_train as test_time_train_thinking
 from marti.verifiers.search_r1.qa_em import compute_score_em
+from marti.verifiers.search_r1.qa_em_boxed import compute_score_em_boxed
 from marti.verifiers.search_r1.qa_em_format import compute_score_em as compute_score_em_format
 from marti.verifiers.gaia.main import gaia_em_reward_fn, gaia_em_reward_fn_ttt
+from marti.verifiers.review_rl.review_eval import group_review_reward_fn
 # from marti.verifiers.deepcoder.code_reward import rllm_reward_fn_code
 
 def auto_verify(task, batch_size, all_outputs, all_labels):
@@ -20,13 +22,15 @@ def auto_verify(task, batch_size, all_outputs, all_labels):
         "ttt_thinking": test_time_train_thinking,
         "search_r1_format": compute_score_em_format,
         "search_r1": compute_score_em,
+        "search": compute_score_em_boxed,
         "gaia": gaia_em_reward_fn,
         "gaia_ttt": gaia_em_reward_fn_ttt,
+        "review_group": group_review_reward_fn,
     }
     assert task in task2verify, f"{task} not in {list(task2verify.keys())}"
     
     verify_fn = task2verify[task]
-    if "ttt" in task:
+    if "ttt" in task or task == "review_group":
         rewards = []
         n_prompts = len(all_outputs) // batch_size
         for prompt_idx in range(n_prompts):

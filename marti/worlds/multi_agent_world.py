@@ -21,6 +21,21 @@ from marti.agents.multi_agent import MAGraph, get_kwargs
 
 logger = init_logger(__name__)
 
+import importlib.util
+import sys
+from pathlib import Path
+import uuid
+
+def load_module_from_path(py_path: str):
+    path = Path(py_path).resolve()
+    mod_name = f"_dyn_{path.stem}_{uuid.uuid4().hex[:8]}"
+    spec = importlib.util.spec_from_file_location(mod_name, str(path))
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot import from {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[mod_name] = module
+    spec.loader.exec_module(module)
+    return module
 
 class MultiAgentWorld(BaseWorld):
     """
@@ -39,10 +54,19 @@ class MultiAgentWorld(BaseWorld):
         print("workflow args", self.workflow_args)
         self.num_agents = len(self.agents)
 
-        self.reward_alloc = MultiAgentRewardAllocation(
-            verify=self.args.verify_task,
-            **self.args.reward_alloc)
-        self.reward_alloc_eval = MultiAgentRewardAllocation(verify=self.args.verify_task_eval)
+        if self.args.workflow_version == "custom":
+            m = load_module_from_path(self.args.processor_func_path)
+            self.multi_agent_reward   = m.MultiAgentReward
+            self.multi_agent_workflow_class = m.MultiAgentWorkflow
+            self.reward_alloc = self.multi_agent_reward(
+                verify=self.args.verify_task,
+                **self.args.reward_alloc)
+            self.reward_alloc_eval = self.multi_agent_reward(verify=self.args.verify_task_eval)
+        else:
+            self.reward_alloc = MultiAgentRewardAllocation(
+                verify=self.args.verify_task,
+                **self.args.reward_alloc)
+            self.reward_alloc_eval = MultiAgentRewardAllocation(verify=self.args.verify_task_eval)
 
     def _build_multi_world(self, world_agents, sampling_params):
         self.name2workflow = {
@@ -72,6 +96,12 @@ class MultiAgentWorld(BaseWorld):
                 **self.workflow_args
             )
             group_args = {"num_rounds": self.args.workflow_args.num_rounds}
+        elif self.args.workflow_version == "custom":
+            group_game = self.multi_agent_workflow_class(
+                agent_list=world_agents,
+                sampling_params=sampling_params,
+                **self.workflow_args)
+            group_args = {}
         return group_game, group_args
 
     @torch.no_grad()
@@ -91,7 +121,7 @@ class MultiAgentWorld(BaseWorld):
 
         group_game, group_args = self._build_multi_world(self.agents, sampling_params)
 
-        group_game.run(all_prompts, **group_args)
+        group_game.run(all_prompts, labels=all_labels, **group_args)
         group_history = group_game.get_history()
 
         _, outcome_rewards = self.reward_alloc_eval.run(
@@ -164,7 +194,7 @@ class MultiAgentWorld(BaseWorld):
                             truncate_prompt_tokens=self.args.prompt_max_len if self.args.truncate_prompt else None)
 
         group_game, group_args = self._build_multi_world(rank_agents, sampling_params)
-        group_game.run(all_prompts, **group_args)
+        group_game.run(all_prompts, labels=all_labels, **group_args)
         group_history = group_game.get_history()
 
         local_rewards, outcome_rewards = self.reward_alloc.run(

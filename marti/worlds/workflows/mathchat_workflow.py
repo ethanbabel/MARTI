@@ -9,6 +9,7 @@ import asyncio
 from marti.helpers.logging import init_logger
 from marti.verifiers.auto_verify import auto_verify
 from marti.worlds.workflows.utils import apply_template_with_tokenizer
+from marti.verifiers.qwen.qwen_eval_timeout import qwen_reward_fn_timeout
 
 logger = init_logger(__name__)
 logger.setLevel(os.getenv("MARTI_LOGGING_LEVEL", "WARN"))
@@ -133,10 +134,11 @@ async def workflow(
     # Verify final solution
     all_outputs = [
         generator_output,
-        f"Answer is \\boxed{response_content.strip()}",
+        f"Answer is \\boxed{response_content.strip()}" if status else "Answer is \\boxed{None}",
         refiner_output
     ]
-    all_rewards = auto_verify(task, 1, all_outputs, [label] * len(all_outputs))
+    # all_rewards = auto_verify(task, 1, all_outputs, [label] * len(all_outputs))
+    all_rewards = [qwen_reward_fn_timeout(output, label) for output in all_outputs]
 
     for turn, reward in zip(trajectory, all_rewards):
         turn["agent_reward"] = reward
