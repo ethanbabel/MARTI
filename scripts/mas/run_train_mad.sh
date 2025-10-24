@@ -3,7 +3,7 @@ set -x
 ray start --head --port=6379 --dashboard-host=0.0.0.0 --dashboard-port=8265 --include-dashboard=true
 
 MODEL_DIR="/fs-computility/mabasic/shared/models/"
-WANDB_KEY="43cfd199988bf094dfde21086e23d3dbfd1269e4"
+WANDB_KEY=""
 ROOT_DIR=$(pwd)
 
 DATE=$(date +%m%d)

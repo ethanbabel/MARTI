@@ -33,7 +33,7 @@ ray start --head \
 
 # MODEL_DIR="/fs-computility/mabasic/qibiqing/marti-project/MARTI-Dev-Git/outputs/group_norm-gaia-val-ttrl/0624/Qwen3-8B/ckpt/"
 MODEL_DIR="/mnt/public/fuyu/OpenRLHF/checkpoints/"
-WANDB_KEY="43cfd199988bf094dfde21086e23d3dbfd1269e4"
+WANDB_KEY=""
 # MODEL_DIR=${1}
 # WANDB_KEY=${2}
 ROOT_DIR=$(pwd)

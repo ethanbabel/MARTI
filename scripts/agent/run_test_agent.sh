@@ -31,7 +31,7 @@ ray start --head \
   --include-dashboard=true
   # --temp-dir="${RAY_TMPDIR}"
 
-WANDB_KEY="43cfd199988bf094dfde21086e23d3dbfd1269e4"
+WANDB_KEY=""
 # MODEL_DIR=${1}
 # WANDB_KEY=${2}
 ROOT_DIR=$(pwd)

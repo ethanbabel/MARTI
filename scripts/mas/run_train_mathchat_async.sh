@@ -28,7 +28,7 @@ ray start --head \
   --temp-dir="${RAY_TMPDIR}"
 
 MODEL_DIR="/fs-computility/mabasic/shared/models/"
-WANDB_KEY="43cfd199988bf094dfde21086e23d3dbfd1269e4"
+WANDB_KEY=""
 ROOT_DIR=$(pwd)
 
 DATE=$(date +%m%d)
