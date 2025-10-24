@@ -12,7 +12,7 @@ Peer review is essential for scientific progress but faces growing challenges du
 The training process can be started using the provided bash script.
 
 ```bash
-bash scripts/run_train_reviewrl_async.sh
+bash examples/reviewrl/run_train_reviewrl_async_multinode.sh
 ```
 
 This script will initiate the RL training process for the ReviewRL task.
