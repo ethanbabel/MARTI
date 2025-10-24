@@ -4,7 +4,7 @@ set -x
 source /cpfs04/user/liudawei/anaconda3/etc/profile.d/conda.sh
 conda activate /cpfs04/user/liudawei/anaconda3/envs/marti_review
 cd /mnt/workspace/qibiqing/openreviewer/rl_marti/MARTI
-export WANDB_API_KEY="1a81e954eb0305fff7b73e92388dd3f3086c1380"
+export WANDB_API_KEY=""
 
 which python
 which conda
