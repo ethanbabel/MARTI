@@ -17,9 +17,6 @@ bash examples/reviewrl/run_train_reviewrl_async_multinode.sh
 
 This script will initiate the RL training process for the ReviewRL task.
 
-## Dataset and Model
-
-The dataset and model will be released soon.
 
 ### Dataset Format
 
