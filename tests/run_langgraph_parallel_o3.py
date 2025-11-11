@@ -26,7 +26,7 @@ TIMEOUT_PER_TASK = 600  # seconds
 # Modified model configuration to support reasoning content
 model = ChatOpenAI(
     model="o3-mini",
-    api_key = "sk-njeP9itAfJioZsxXSlGHpQQvDr8fzWPceIBC772EL0jxw9yQ",
+    api_key = "",
     base_url = "https://lonlie.plus7.plus/v1",
     temperature=0.0,
     # Critical: Enable Responses API to get reasoning content
@@ -42,7 +42,7 @@ model = ChatOpenAI(
     # output_version="responses/v1"  # This puts reasoning in content field instead of additional_kwargs
 )
 
-output_dir = "/fs-computility/mabasic/qibiqing/marti-project/MARTI-Dev-Git/local/GAIA/outputs/o3-mini-new"
+output_dir = "./MARTI-Dev-Git/local/GAIA/outputs/o3-mini-new"
 
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
@@ -56,7 +56,7 @@ client = MultiServerMCPClient(
     }
 )
 
-data = list(srsly.read_jsonl("/fs-computility/mabasic/qibiqing/marti-project/MARTI-Dev-Git/local/GAIA/2023/validation/metadata.jsonl"))[:3]
+data = list(srsly.read_jsonl("./MARTI-Dev-Git/local/GAIA/2023/validation/metadata.jsonl"))[:3]
 
 def extract_reasoning_content(msg):
     """Extract reasoning content from message"""
