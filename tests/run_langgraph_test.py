@@ -22,7 +22,7 @@ model = ChatOpenAI(
     api_key="null",
 )
 
-output_dir = f"/Users/kaiyan/Project/MARTI-Dev/outputs/GAIA/{model_name}"
+output_dir = f"./MARTI-Dev/outputs/GAIA/{model_name}"
 
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
@@ -37,7 +37,7 @@ client = MultiServerMCPClient(
     }
 )
 
-data = list(srsly.read_jsonl("/Users/kaiyan/Project/MARTI-Dev/data/GAIA/2023/validation/metadata.jsonl"))
+data = list(srsly.read_jsonl("./MARTI-Dev/data/GAIA/2023/validation/metadata.jsonl"))
 MAX_ITERATIONS = 1
 data = random.sample(data, 3)
 
