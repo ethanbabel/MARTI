@@ -56,7 +56,7 @@ async def main():
                 print(tool)
 
             client = OpenAI(
-                api_key="sk-353a88a777bd4c598f17b2923677e100",
+                api_key="",
                 base_url="https://api.deepseek.com/v1"
                 # base_url="http://localhost:8000/v1",
                 # api_key="token-abc123",
