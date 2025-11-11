@@ -28,18 +28,18 @@ model = ChatOpenAI(
     temperature=0.7,
     ##############
     model="kimi-k2-0711-preview",
-    api_key="sk-e8HuNNcabKtFw30tFdnfLtg2NJZDNldv6h9CXmY1PLsOVbKU",
+    api_key="",
     base_url="https://api.moonshot.cn/v1",
     # model="deepseek-chat",
-    # api_key="sk-353a88a777bd4c598f17b2923677e100",
+    # api_key="",
     # base_url="https://api.deepseek.com/v1"
     ##############
     # model="o3-mini",
-    # api_key = "sk-njeP9itAfJioZsxXSlGHpQQvDr8fzWPceIBC772EL0jxw9yQ",
+    # api_key = "",
     # base_url = "https://lonlie.plus7.plus/v1",
     ##############
     # model="gpt-4.1",
-    # api_key="sk-XALHhZS9mStChVdwF47e35C026F147D2A11937E4C81b7d34",
+    # api_key="",
     # base_url="https://api.sttai.cc/v1"
     # api_key="token-abc123",
     # base_url="http://localhost:8000/v1"
@@ -62,7 +62,7 @@ client = MultiServerMCPClient(
     }
 )
 
-data = list(srsly.read_jsonl("/mnt/public/kyzhang/MARTI/local/GAIA/2023/validation/metadata.jsonl"))
+data = list(srsly.read_jsonl("./MARTI/local/GAIA/2023/validation/metadata.jsonl"))
 
 async def process_single_sample(agent, sample: Dict[str, Any], sid: int, prompt_template: str, semaphore: asyncio.Semaphore) -> None:
     """Process a single sample with the agent"""
