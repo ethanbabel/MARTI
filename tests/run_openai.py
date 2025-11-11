@@ -72,7 +72,7 @@ if __name__ == "__main__":
     from marti.verifiers.auto_verify import auto_verify
     
     for effort in ["LOW", "MEDIUM", "HIGH"]:
-        data = srsly.read_json(f"/mnt/public/kyzhang/MARTI/outputs/gpt-oss-20b/aime_16k_ReasoningEffort.{effort}.json")
+        data = srsly.read_json(f"./MARTI/outputs/gpt-oss-20b/aime_16k_ReasoningEffort.{effort}.json")
 
         acc = []
         for sample in data:
