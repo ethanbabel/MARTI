@@ -187,6 +187,7 @@ label_key: "label"
 output_key: "output"
 metadata_key: "metadata"
 add_think_token: 0
+add_prompt_prefix: null
 add_prompt_suffix: "\n\nPlease reason step by step, and put your final answer within \\boxed{}."
 input_template: null
 apply_chat_template: false
