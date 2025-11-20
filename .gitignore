@@ -178,5 +178,5 @@ local/
 *.toml
 *uv.*
 
-data/
+data/deepcoder-filter-8k
 ckpt/

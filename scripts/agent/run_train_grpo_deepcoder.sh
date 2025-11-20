@@ -3,7 +3,7 @@ set -x
 ulimit -n 65535
 
 # ---------- Ray Configuration ----------
-RAY_TMPDIR="/fs-computility/mabasic/qibiqing/ray_temp"
+export RAY_TMPDIR="/mnt/public/kyzhang/tmp/"
 export RAY_TMPDIR="${RAY_TMPDIR}"            # Move Ray's temporary directory to a place with sufficient inodes.
 export RAY_LOG_TO_STDERR_ONLY=1              # Avoid writing massive log files
 export RAY_OBJECT_STORE_MEMORY=1000000000    # Set the explicit size of the object store (can be increased according to machine memory).
@@ -29,17 +29,17 @@ ray start --head \
   --include-dashboard=true \
   --temp-dir="${RAY_TMPDIR}"
 
-MODEL_DIR="/fs-computility/mabasic/shared/models/"
+MODEL_DIR="/mnt/public/hf_models/Qwen/"
 WANDB_KEY=""
 # MODEL_DIR=${1}
 # WANDB_KEY=${2}
 ROOT_DIR=$(pwd)
 
-DATE=$(date +%m%d)
+DATE=$(date +%m%d%H%M)
 ADVANTAGE="group_norm"
-SHORT_NAME="Qwen2.5-3B-Instruct"
+SHORT_NAME="Qwen3-4B-Instruct-2507"
 
-TASK="deepcoder"
+TASK="deepcoder-filter-8k"
 ALGO="deepcoder-async"
 
 PRETRAIN="${MODEL_DIR}/${SHORT_NAME}"
@@ -47,7 +47,7 @@ EXP="${DATE}-${TASK}-${SHORT_NAME}-${ADVANTAGE}-${ALGO}"
 
 SAVE_PATH="${ROOT_DIR}/outputs/${ADVANTAGE}-${ALGO}/${DATE}/${SHORT_NAME}/model"
 
-PROMPT_DATA="json@${ROOT_DIR}/local/${TASK}"
+PROMPT_DATA="json@${ROOT_DIR}/data/${TASK}"
 TENSORBOARD="${ROOT_DIR}/logs/tensorboard/${ADVANTAGE}-${ALGO}-${DATE}-${SHORT_NAME}"
 CKPT_PATH="${ROOT_DIR}/outputs/${ADVANTAGE}-${ALGO}//${DATE}/${SHORT_NAME}/ckpt"
 
@@ -63,17 +63,18 @@ GENERATE_MAX_LEN=8192
 ENV_JSON=$(cat <<EOF
 {
   "working_dir": "${ROOT_DIR}",
-  "excludes": ["/data/", "/outputs/", ".git/", "/local/", "/logs/"],
+  "excludes": ["/data/", "/outputs/", ".git/"],
   "pip": ["hydra-core", "antlr4-python3-runtime==4.9.3", "shortuuid", "class_registry", "json5", "mcp[cli]"]
 }
 EOF
 )
 
+
 ray job submit --address="http://localhost:8265" \
     --runtime-env-json="${ENV_JSON}" \
     -- python -m marti.cli.commands.train --config-name "deepcoder" \
     agent_workflow="tool" \
-    agent_func_path="marti/worlds/tools/code_step.py" \
+    agent_func_path="marti/worlds/steps/code_step.py" \
     default_agent.ref_num_nodes=1 \
     default_agent.pg_strategy="SPREAD" \
     default_agent.ref_num_gpus_per_node=8 \
@@ -90,15 +91,15 @@ ray job submit --address="http://localhost:8265" \
     default_agent.vllm_gpu_memory_utilization=0.6 \
     default_agent.pretrain="${PRETRAIN}" \
     default_agent.save_path="${SAVE_PATH}" \
-    default_agent.micro_train_batch_size=8 \
-    default_agent.train_batch_size=512 \
-    default_agent.num_episodes=1 \
-    default_agent.save_steps=100 \
-    default_agent.eval_steps=50 \
+    default_agent.micro_train_batch_size=4 \
+    default_agent.train_batch_size=256 \
+    default_agent.num_episodes=2 \
+    default_agent.save_steps=125 \
+    default_agent.eval_steps=25 \
     default_agent.logging_steps=1 \
     default_agent.max_samples=1000000 \
-    default_agent.micro_rollout_batch_size=8 \
-    default_agent.rollout_batch_size=128 \
+    default_agent.micro_rollout_batch_size=4 \
+    default_agent.rollout_batch_size=64 \
     default_agent.training_mode="rl" \
     default_agent.n_samples_per_prompt=4 \
     default_agent.max_epochs=1 \
@@ -124,7 +125,8 @@ ray job submit --address="http://localhost:8265" \
     tools_config.max_turns=1 \
     mask_truncated_completions=True \
     eval_before_training=False \
-    eval_workers=1 \
+    eval_only=False \
+    eval_workers=-1 \
     verify_task=null \
     verify_task_eval=null \
     packing_samples=True \

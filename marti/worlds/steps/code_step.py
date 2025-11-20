@@ -25,7 +25,7 @@ async def step(
     # metadata = json.loads(kwargs["metadata"])
     # final_reward = rllm_reward_fn_code(
     #     metadata["data_source"], action, kwargs["label"])
-    final_reward = code_verify(kwargs["label"], action)
+    final_reward = code_verify(json.loads(kwargs["label"]), action)
 
     return {
         "next_observation": observation + [action],
