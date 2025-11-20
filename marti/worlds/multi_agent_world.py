@@ -376,6 +376,7 @@ class MultiAgentWorld(BaseWorld):
             packed_seq_lens = []
             attention_mask = []
             num_actions = []
+            current_action_mask = []
             for i, output in enumerate(outputs):
                 prompt = prompts[i]
                 input_len = len(prompt)
@@ -384,6 +385,7 @@ class MultiAgentWorld(BaseWorld):
                 sequences.extend(prompt + list(output))
                 attention_mask.extend([i + 1] * (input_len + output_len))
 
+                current_action_mask.extend([1] * max(1, output_len))
                 # current_action_mask = [0] * (input_len - 1) + [1] * output_len + [0]
                 # num_actions.append(max(1, sum(current_action_mask)))
                 num_actions.append(max(1, output_len))
@@ -399,12 +401,12 @@ class MultiAgentWorld(BaseWorld):
                 action_mask = sum(action_mask_list, [])
                 assert len(action_mask) == sum(
                     num_actions), f"action_mask ({len(action_mask)}) and num_actions ({sum(num_actions)}) should have the same length"
-                # TODO: action_mask should be a int tensor not bool tensor
-                action_mask = torch.tensor(
-                    action_mask, device="cpu", dtype=torch.int).unsqueeze(0)
             else:
-                action_mask = None
+                action_mask = current_action_mask
 
+            # TODO: action_mask should be a int tensor not bool tensor
+            action_mask = torch.tensor(
+                action_mask, device="cpu", dtype=torch.int).unsqueeze(0)
             # TODO: number of agents in each sample should keep consistent, so we save num_agent_actions in list rather than torch.tensor
 
             samples = Samples(
